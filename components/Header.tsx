@@ -7,9 +7,10 @@ import { site } from "@/lib/data/site";
 
 const navItems = [
   ["About", "#about"],
-  ["Services", "#services"],
-  ["Projects", "#projects"],
-  ["Industries", "#industries"],
+  ["Experience", "#experience"],
+  ["Expertise", "#expertise"],
+  ["Portfolio", "#projects"],
+  ["Positioning", "#positioning"],
   ["Blog", "#blog"],
   ["Contact", "#contact"]
 ];
@@ -30,7 +31,7 @@ export function Header() {
             priority
           />
         </a>
-        <nav className="hidden items-center gap-7 text-sm text-white/[0.78] md:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-5 text-sm text-white/[0.78] lg:flex" aria-label="Primary navigation">
           {navItems.map(([label, href]) => (
             <a key={label} href={href} className="transition hover:text-white">
               {label}
@@ -39,13 +40,13 @@ export function Header() {
         </nav>
         <a
           href="#contact"
-          className="hidden rounded bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-teal md:inline-flex"
+          className="hidden rounded bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-teal lg:inline-flex"
         >
           Let&apos;s Talk
         </a>
         <button
           type="button"
-          className="grid size-10 place-items-center rounded border border-white/[0.18] md:hidden"
+          className="grid size-10 place-items-center rounded border border-white/[0.18] lg:hidden"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-label="Toggle navigation"
@@ -54,7 +55,7 @@ export function Header() {
         </button>
       </div>
       {open ? (
-        <nav className="border-t border-white/10 bg-ink px-5 py-4 md:hidden" aria-label="Mobile navigation">
+        <nav className="border-t border-white/10 bg-ink px-5 py-4 lg:hidden" aria-label="Mobile navigation">
           <div className="mx-auto grid max-w-7xl gap-2">
             {navItems.map(([label, href]) => (
               <a

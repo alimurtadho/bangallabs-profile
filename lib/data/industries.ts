@@ -4,6 +4,7 @@ export const industries = [
   "Education",
   "FMCG",
   "Banking",
+  "Game Industry",
   "Agriculture",
   "Contractor",
   "Startup",

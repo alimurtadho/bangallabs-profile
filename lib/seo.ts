@@ -11,7 +11,7 @@ export const organizationJsonLd = {
     name: site.founder,
     jobTitle: site.role
   },
-  sameAs: [site.linkedin]
+  sameAs: [site.linkedin, site.github, site.medium]
 };
 
 export const websiteJsonLd = {
@@ -19,5 +19,5 @@ export const websiteJsonLd = {
   "@type": "WebSite",
   name: site.name,
   url: site.url,
-  description: "AI, Data, and Digital Transformation Consulting"
+  description: "AI and Data Solutions, R&D Engineering, and Digital Transformation"
 };

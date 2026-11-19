@@ -5,9 +5,9 @@ import { Analytics } from "@/components/Analytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: "BangAl Labs - AI, Data & Digital Transformation Consulting",
+  title: "Ali Murtadho | AI & Data Solutions Lead - BangAl Labs",
   description:
-    "BangAl Labs helps organizations improve business processes through AI solutions, data engineering, analytics, and digital transformation.",
+    "AI and data solutions leadership, R&D engineering, solution architecture, and digital transformation portfolio by Ali Murtadho.",
   alternates: {
     canonical: "/"
   },
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     apple: "/images/logo-transparent.png"
   },
   openGraph: {
-    title: "BangAl Labs - AI, Data & Digital Transformation Consulting",
+    title: "Ali Murtadho | AI & Data Solutions Lead - BangAl Labs",
     description:
-      "BangAl Labs helps organizations improve business processes through AI solutions, data engineering, analytics, and digital transformation.",
+      "AI and data solutions leadership, R&D engineering, solution architecture, and digital transformation portfolio by Ali Murtadho.",
     url: site.url,
     siteName: site.name,
     images: [
@@ -35,8 +35,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BangAl Labs - AI, Data & Digital Transformation Consulting",
-    description: "AI, data engineering, analytics, and digital transformation consulting for business growth.",
+    title: "Ali Murtadho | AI & Data Solutions Lead - BangAl Labs",
+    description: "AI, data, R&D engineering, and digital transformation portfolio.",
     images: ["/images/logo-transparent.png"]
   }
 };
