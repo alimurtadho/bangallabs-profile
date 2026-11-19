@@ -1,0 +1,279 @@
+import Image from "next/image";
+import { ArrowRight, BrainCircuit, Building2, CheckCircle2, Database, ExternalLink, Factory, LineChart, Mail, MessageCircle, ShieldCheck, Workflow } from "lucide-react";
+import { Header } from "@/components/Header";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ContactForm } from "@/components/ContactForm";
+import { articles } from "@/lib/data/articles";
+import { industries } from "@/lib/data/industries";
+import { projects } from "@/lib/data/projects";
+import { services } from "@/lib/data/services";
+import { site, whatsappMessage } from "@/lib/data/site";
+import { technologies } from "@/lib/data/technologies";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
+
+const stats = [
+  ["6+", "Years Experience"],
+  ["15+", "Projects Delivered"],
+  ["5+", "Industries"],
+  ["100%", "Business Focused"]
+];
+
+const serviceIcons = [BrainCircuit, Database, LineChart, Workflow, Building2];
+
+const whatsappUrl = `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(whatsappMessage)}`;
+
+export default function Home() {
+  return (
+    <>
+      <Header />
+      <main>
+        <section className="relative min-h-[92vh] overflow-hidden bg-ink text-white">
+          <Image
+            src="/images/hero-command-center.png"
+            alt="Enterprise analytics and computer vision command center"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,19,22,0.94)_0%,rgba(8,19,22,0.72)_38%,rgba(8,19,22,0.16)_74%)]" />
+          <div className="relative mx-auto flex min-h-[92vh] max-w-7xl items-center px-5 pt-24 lg:px-8">
+            <div className="max-w-3xl pb-16 pt-14">
+              <p className="mb-5 text-xs font-bold uppercase tracking-[0.24em] text-teal">AI | Data | Digital Transformation Consulting</p>
+              <h1 className="max-w-4xl text-4xl font-semibold leading-[1.08] tracking-normal sm:text-6xl lg:text-7xl">
+                Transforming Business Through AI, Data & Digital Innovation
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-white/[0.76]">
+                Helping organizations build scalable systems, AI solutions, analytics platforms, and digital transformation initiatives.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <a href={whatsappUrl} data-analytics="hero_whatsapp_click" className="inline-flex items-center justify-center gap-2 rounded bg-teal px-6 py-3 font-semibold text-ink transition hover:bg-white" aria-label="Contact BangAl Labs on WhatsApp">
+                  Let&apos;s Talk
+                  <MessageCircle size={18} />
+                </a>
+                <a href="#projects" data-analytics="hero_portfolio_click" className="inline-flex items-center justify-center gap-2 rounded border border-white/[0.22] px-6 py-3 font-semibold text-white transition hover:border-white hover:bg-white/10">
+                  View Portfolio
+                  <ArrowRight size={18} />
+                </a>
+              </div>
+              <div className="mt-12 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+                {stats.map(([value, label]) => (
+                  <div key={label} className="border-l border-teal/70 pl-4">
+                    <p className="text-2xl font-semibold">{value}</p>
+                    <p className="mt-1 text-xs uppercase tracking-wide text-white/[0.62]">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="about" className="section-pad bg-white">
+          <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+            <div className="relative overflow-hidden rounded bg-ink p-8 text-white shadow-soft">
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-teal/[0.18]" />
+              <div className="relative">
+                <div className="grid size-24 place-items-center rounded bg-teal text-3xl font-black text-ink">AM</div>
+                <p className="mt-8 text-sm uppercase tracking-[0.2em] text-teal">Founder Profile</p>
+                <h2 className="mt-3 text-3xl font-semibold">{site.founder}</h2>
+                <p className="mt-2 text-white/[0.72]">{site.role}</p>
+                <div className="mt-8 grid grid-cols-2 gap-3">
+                  {stats.map(([value, label]) => (
+                    <div key={label} className="rounded border border-white/12 bg-white/[0.07] p-4">
+                      <p className="text-2xl font-semibold text-teal">{value}</p>
+                      <p className="mt-1 text-sm text-white/[0.68]">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-teal">About BangAl Labs</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-normal text-ink sm:text-4xl">Business transformation with engineering depth.</h2>
+              <p className="mt-5 text-lg leading-8 text-ink/70">
+                I help organizations transform business processes through AI, data engineering, analytics, and cloud technologies. My experience spans banking, healthcare, government, FMCG, and startup ecosystems, delivering scalable systems that bridge technology and business value.
+              </p>
+              <div className="mt-8 grid gap-3 text-ink/[0.76] sm:grid-cols-2">
+                {["Consulting first, not generic software house", "Recent AHM vendor/client work in helmet detection", "Business process improvement plus analytics delivery", "Proposal-ready portfolio for enterprise conversations"].map((item) => (
+                  <div key={item} className="flex items-start gap-3">
+                    <CheckCircle2 className="mt-0.5 shrink-0 text-teal" size={20} />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="services" className="section-pad bg-[#edf3f1]">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <SectionHeading
+              eyebrow="Services"
+              title="Consulting capabilities for AI, data, and operational scale"
+              description="Each engagement starts from business outcomes, then maps the right architecture, data flow, and delivery plan."
+            />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              {services.map((service, index) => {
+                const Icon = serviceIcons[index] ?? BrainCircuit;
+                return (
+                  <article key={service.title} className="rounded border border-ink/10 bg-white p-5 shadow-sm">
+                    <Icon className="text-teal" size={28} />
+                    <h3 className="mt-5 text-xl font-semibold text-ink">{service.title}</h3>
+                    <p className="mt-3 min-h-20 text-sm leading-6 text-ink/[0.64]">{service.description}</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {service.capabilities.map((capability) => (
+                        <span key={capability} className="chip rounded px-2.5 py-1 text-xs font-medium">
+                          {capability}
+                        </span>
+                      ))}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section id="projects" className="section-pad bg-white">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <SectionHeading
+              eyebrow="Featured Projects"
+              title="Portfolio built around real business problems"
+              description="Projects are presented by problem, technical solution, and business value so prospective clients can quickly see fit."
+            />
+            <div className="grid gap-5 lg:grid-cols-2">
+              {projects.map((project) => (
+                <article key={project.slug} className="rounded border border-ink/10 bg-white p-6 shadow-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded bg-ink px-3 py-1 text-xs font-semibold text-white">{project.industry}</span>
+                    {project.status ? <span className="rounded bg-teal/[0.14] px-3 py-1 text-xs font-semibold text-ink">{project.status}</span> : null}
+                  </div>
+                  <h3 className="mt-5 text-2xl font-semibold text-ink">{project.title}</h3>
+                  <p className="mt-3 leading-7 text-ink/[0.68]">{project.description}</p>
+                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/[0.48]">Capabilities</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {project.capabilities.map((capability) => (
+                          <span key={capability} className="chip rounded px-2.5 py-1 text-xs font-medium">
+                            {capability}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-ink/[0.48]">Technology</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {project.technologies?.map((technology) => (
+                          <span key={technology} className="rounded bg-[#edf3f1] px-2.5 py-1 text-xs font-medium text-ink/[0.72]">
+                            {technology}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="industries" className="section-pad bg-ink text-white">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <SectionHeading
+              eyebrow="Industry Experience"
+              title="Comfortable across enterprise, medium business, and startup contexts"
+              description="BangAl Labs translates domain complexity into practical systems, metrics, and workflow improvements."
+            />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {industries.map((industry) => (
+                <div key={industry} className="flex min-h-24 items-center gap-3 rounded border border-white/12 bg-white/[0.07] p-4">
+                  <Factory className="shrink-0 text-teal" size={22} />
+                  <span className="font-medium text-white/[0.86]">{industry}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-pad bg-[#f6f8f7]">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <SectionHeading eyebrow="Technology" title="Tools selected for reliability, speed, and maintainability" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+              {technologies.map((technology) => (
+                <div key={technology} className="rounded border border-ink/10 bg-white px-4 py-4 text-center text-sm font-semibold text-ink/[0.78] shadow-sm">
+                  {technology}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="blog" className="section-pad bg-white">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <SectionHeading
+              eyebrow="Blog"
+              title="Notes on AI, data, and digital transformation"
+              description="MVP uses curated article placeholders and can be wired to Medium RSS during the next integration step."
+            />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+              {articles.map((article) => (
+                <a
+                  key={article.title}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded border border-ink/10 bg-[#f6f8f7] p-5 transition hover:border-teal hover:bg-white"
+                >
+                  <h3 className="min-h-20 text-lg font-semibold leading-6 text-ink">{article.title}</h3>
+                  <p className="mt-4 text-sm leading-6 text-ink/[0.64]">{article.excerpt}</p>
+                  <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-ink">
+                    Read Article
+                    <ExternalLink size={16} />
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" className="section-pad bg-ink text-white">
+          <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-teal">Contact</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-normal sm:text-4xl">Ready to discuss AI, data, or digital transformation?</h2>
+              <p className="mt-5 leading-8 text-white/70">
+                Share the business problem, current workflow, and expected outcome. BangAl Labs can help shape the solution direction, architecture, and delivery plan.
+              </p>
+              <div className="mt-8 grid gap-3">
+                <a href={whatsappUrl} data-analytics="contact_whatsapp_click" className="inline-flex items-center gap-3 rounded border border-white/[0.14] px-4 py-3 text-white/[0.86] transition hover:border-teal hover:text-white">
+                  <MessageCircle className="text-teal" size={20} />
+                  WhatsApp
+                </a>
+                <a href={`mailto:${site.email}`} data-analytics="contact_email_click" className="inline-flex items-center gap-3 rounded border border-white/[0.14] px-4 py-3 text-white/[0.86] transition hover:border-teal hover:text-white">
+                  <Mail className="text-teal" size={20} />
+                  {site.email}
+                </a>
+                <a href={site.linkedin} data-analytics="contact_linkedin_click" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 rounded border border-white/[0.14] px-4 py-3 text-white/[0.86] transition hover:border-teal hover:text-white">
+                  <ShieldCheck className="text-teal" size={20} />
+                  LinkedIn
+                </a>
+              </div>
+            </div>
+            <div className="rounded border border-white/12 bg-white/[0.07] p-5 sm:p-7">
+              <ContactForm whatsapp={site.whatsapp} />
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer className="border-t border-ink/10 bg-white px-5 py-8 text-sm text-ink/60">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <p>&copy; {new Date().getFullYear()} {site.name}. AI, Data & Digital Transformation Consulting.</p>
+          <p>Built for proposal, portfolio, and lead generation.</p>
+        </div>
+      </footer>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+    </>
+  );
+}

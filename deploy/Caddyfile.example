@@ -1,0 +1,12 @@
+# Add this site block to the existing /etc/caddy/Caddyfile.
+# Keep the existing cv-abu-app block unchanged.
+
+bangallabs.web.id, www.bangallabs.web.id {
+	encode zstd gzip
+	reverse_proxy bangallabs-web:3000
+}
+
+# Optional redirect when bangallabs.my.id is also owned and its DNS points here.
+# bangallabs.my.id, www.bangallabs.my.id {
+# 	redir https://bangallabs.web.id{uri} permanent
+# }

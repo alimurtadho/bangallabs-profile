@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://bangallabs.web.id}
+        CONTACT_EMAIL: ${CONTACT_EMAIL:-hello@bangallabs.web.id}
+        WHATSAPP_NUMBER: ${WHATSAPP_NUMBER:-62856067753920}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+    container_name: bangallabs-web
+    restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://bangallabs.web.id}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-hello@bangallabs.web.id}
+      WHATSAPP_NUMBER: ${WHATSAPP_NUMBER:-62856067753920}
+      NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+    ports:
+      - "127.0.0.1:3100:3000"
+    networks:
+      - default
+      - cv_abu
+
+networks:
+  cv_abu:
+    external: true
+    name: cv-abu-net

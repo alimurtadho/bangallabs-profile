@@ -1,0 +1,22 @@
+<svg width="1400" height="420" viewBox="0 0 1400 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="24" y="24" width="1352" height="372" rx="58" fill="#ffffff"/>
+  <rect x="24.5" y="24.5" width="1351" height="371" rx="57.5" stroke="#081316" stroke-opacity="0.1"/>
+  <g transform="translate(92 72)">
+    <rect x="0" y="0" width="276" height="276" rx="58" fill="#081316"/>
+    <path d="M68 188L114 118L156 154L204 82" stroke="#16d4bd" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="68" cy="188" r="18" fill="#16d4bd"/>
+    <circle cx="114" cy="118" r="18" fill="#f4a23b"/>
+    <circle cx="156" cy="154" r="18" fill="#16d4bd"/>
+    <circle cx="204" cy="82" r="18" fill="#f4a23b"/>
+    <path d="M72 230H206" stroke="#ffffff" stroke-opacity="0.9" stroke-width="14" stroke-linecap="round"/>
+    <path d="M230 126V74C230 58 218 46 202 46H150" stroke="#ffffff" stroke-opacity="0.18" stroke-width="12" stroke-linecap="round"/>
+    <path d="M46 150V202C46 218 58 230 74 230H126" stroke="#ffffff" stroke-opacity="0.18" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(430 115)">
+    <text x="0" y="82" fill="#081316" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="800">BangAl</text>
+    <text x="330" y="82" fill="#16a997" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="800">Labs</text>
+    <rect x="3" y="132" width="94" height="8" rx="4" fill="#16d4bd"/>
+    <rect x="110" y="132" width="42" height="8" rx="4" fill="#f4a23b"/>
+    <text x="0" y="190" fill="#102125" fill-opacity="0.72" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" letter-spacing="3">AI DATA DIGITAL INNOVATION</text>
+  </g>
+</svg>
