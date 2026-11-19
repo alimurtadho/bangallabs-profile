@@ -1,421 +1,212 @@
-# Tutorial Deploy BangAl Labs ke VPS
+# Deploy BangAl Labs melalui Git Pull
 
-Tutorial ini menggunakan struktur berikut:
+Panduan ini memigrasikan deployment lama berbasis `rsync` ke deployment berbasis Git tanpa mengubah Caddy, domain, port, atau external Docker network.
 
-- Source di komputer lokal: `/Users/newuser/ali/project/bangAllabs/website`
-- Source di VPS: `/opt/website`
-- Aplikasi Next.js berjalan melalui Docker di `127.0.0.1:3100` (container tetap memakai port internal `3000`)
-- Caddy yang sudah melayani `cv-abu-app` tetap menjadi reverse proxy tunggal di port 80/443
-- Container BangAl Labs bergabung ke external Docker network `cv-abu-net`
-- Domain utama: `bangallabs.web.id`
+## Topologi production
 
-Ganti nilai berikut sesuai VPS Anda:
+- Repository Git: `https://github.com/alimurtadho/bangallabs-profile.git`
+- Branch production: `main`
+- Source lama/rollback: `/opt/website`
+- Source Git baru: `/opt/bangallabs-profile`
+- Compose project dipertahankan: `website`
+- Container: `bangallabs-web`
+- Host port: `127.0.0.1:3100`
+- Container port: `3000`
+- External network: `cv-abu-net`
+- Reverse proxy: `cv-abu-caddy`
+- Caddyfile: `/opt/apps/docker/caddy/Caddyfile`
+- Domain: `https://bangallabs.web.id`
 
-```text
-<VPS_USER> = user SSH, misalnya ubuntu
-<VPS_IP>   = IP publik VPS
-```
+BangAl Labs tidak memiliki database atau Docker volume. Data production yang perlu dipertahankan adalah `.env.production`, konfigurasi Compose lama, Caddyfile, metadata container, dan image Docker untuk rollback. Jangan menghentikan atau mengubah `cv-abu-db`, `cv-abu-app`, Family Connect, atau Caddy selama proses backup.
 
-## 1. Hubungkan domain ke VPS
+## 1. Backup deployment lama
 
-Pada pengelola DNS domain, buat record berikut:
-
-| Type | Name | Value |
-| --- | --- | --- |
-| A | `@` | `<VPS_IP>` |
-| A | `www` | `<VPS_IP>` |
-
-Tunggu propagasi, kemudian cek dari komputer lokal:
+Jalankan sebagai `root` di VPS:
 
 ```bash
-dig +short bangallabs.web.id
-dig +short www.bangallabs.web.id
+cd /opt
+
+BANGAL_STAMP=$(date +%Y%m%d-%H%M%S)
+BANGAL_BACKUP_DIR="/opt/backups/bangallabs/$BANGAL_STAMP"
+
+install -d -m 700 "$BANGAL_BACKUP_DIR"
+
+cp -a /opt/website/.env.production "$BANGAL_BACKUP_DIR/.env.production"
+cp -a /opt/website/docker-compose.yml "$BANGAL_BACKUP_DIR/docker-compose.yml"
+cp -a /opt/website/Dockerfile "$BANGAL_BACKUP_DIR/Dockerfile"
+cp -a /opt/apps/docker/caddy/Caddyfile "$BANGAL_BACKUP_DIR/Caddyfile"
+
+tar \
+  --exclude='website/node_modules' \
+  --exclude='website/.next' \
+  -czf "$BANGAL_BACKUP_DIR/website-source.tar.gz" \
+  -C /opt website
+
+docker inspect bangallabs-web > "$BANGAL_BACKUP_DIR/bangallabs-web.inspect.json"
+docker network inspect cv-abu-net > "$BANGAL_BACKUP_DIR/cv-abu-net.inspect.json"
+
+docker compose \
+  -p website \
+  -f /opt/website/docker-compose.yml \
+  --env-file /opt/website/.env.production \
+  config > "$BANGAL_BACKUP_DIR/compose.rendered.yml"
+
+docker image tag \
+  "$(docker inspect --format '{{.Image}}' bangallabs-web)" \
+  "bangallabs-web:rollback-$BANGAL_STAMP"
+
+chmod 600 "$BANGAL_BACKUP_DIR/.env.production" "$BANGAL_BACKUP_DIR/compose.rendered.yml"
+
+echo "Backup tersimpan di: $BANGAL_BACKUP_DIR"
+ls -lah "$BANGAL_BACKUP_DIR"
+docker image ls 'bangallabs-web:rollback-*'
 ```
 
-Keduanya harus menampilkan IP VPS. Caddy baru dapat menerbitkan sertifikat HTTPS setelah domain mengarah ke VPS.
+Folder `/opt/website` jangan dihapus. Folder tersebut menjadi rollback source sampai deployment Git terbukti stabil.
 
-## 2. Siapkan VPS
-
-Masuk melalui SSH:
+## 2. Validasi repository baru
 
 ```bash
-ssh <VPS_USER>@<VPS_IP>
+cd /opt/bangallabs-profile
+
+pwd
+git remote -v
+git branch --show-current
+git status --short
 ```
 
-Untuk Ubuntu 22.04/24.04 baru, pasang kebutuhan dasar dan repository resmi Docker:
+Hasil yang diharapkan:
+
+- `pwd` menampilkan `/opt/bangallabs-profile`.
+- Remote `origin` mengarah ke `alimurtadho/bangallabs-profile.git`.
+- Branch aktif adalah `main`.
+- `git status --short` kosong.
+
+## 3. Ambil source terbaru dan pindahkan environment
 
 ```bash
-sudo apt update
-sudo apt install -y ca-certificates curl rsync
+cd /opt/bangallabs-profile
 
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
+git fetch --prune origin
+git pull --ff-only origin main
 
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+install -m 600 \
+  /opt/website/.env.production \
+  /opt/bangallabs-profile/.env.production
 
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo systemctl enable --now docker
+grep -E '^(NEXT_PUBLIC_SITE_URL|CONTACT_EMAIL|WHATSAPP_NUMBER|NEXT_PUBLIC_GA_ID)=' \
+  /opt/bangallabs-profile/.env.production
 ```
 
-Jika VPS sudah memiliki Docker, periksa lebih dahulu dengan `docker --version` dan `docker compose version`. Jika keduanya berfungsi, Anda dapat melewati instalasi Docker di atas. Jangan mencampur paket `docker.io` bawaan Ubuntu dengan `docker-ce` dari repository resmi pada server yang sama.
+Periksa nilai hasil `grep`. File `.env.production` diabaikan oleh Git dan tidak boleh di-commit.
 
-Verifikasi instalasi:
+## 4. Validasi sebelum mengganti container
 
 ```bash
-sudo docker run --rm hello-world
-docker compose version
+cd /opt/bangallabs-profile
+
+docker network inspect cv-abu-net >/dev/null
+
+docker compose \
+  -p website \
+  --env-file .env.production \
+  config -q
+
+docker compose \
+  -p website \
+  --env-file .env.production \
+  build web
 ```
 
-Berikan user SSH akses menjalankan Docker tanpa `sudo`:
+Build dilakukan saat container lama masih berjalan. Jika build gagal, container production tidak berubah.
+
+## 5. Recreate hanya BangAl Labs
 
 ```bash
-sudo usermod -aG docker <VPS_USER>
+cd /opt/bangallabs-profile
+
+docker compose \
+  -p website \
+  --env-file .env.production \
+  up -d --no-deps --force-recreate web
 ```
 
-Keluar lalu login ulang agar keanggotaan grup aktif:
+Flag `-p website` penting. Project name ini mempertahankan identitas Compose lama walaupun source berpindah dari `/opt/website` ke `/opt/bangallabs-profile`.
+
+Perintah tersebut hanya melakukan recreate service `web`. Container Caddy, CV Abu, PostgreSQL, dan Family Connect tidak ikut direstart.
+
+## 6. Verifikasi deployment
 
 ```bash
-exit
-ssh <VPS_USER>@<VPS_IP>
+cd /opt/bangallabs-profile
+
+docker compose -p website --env-file .env.production ps
+docker compose -p website --env-file .env.production logs --tail=100 web
+
+curl --max-time 15 -I http://127.0.0.1:3100
+
+docker exec cv-abu-caddy sh -c \
+  'wget -T 10 -S -O /dev/null http://bangallabs-web:3000 2>&1 | head -20'
+
+curl --max-time 20 -I https://bangallabs.web.id
 ```
 
-Siapkan folder deployment:
+Hasil yang diharapkan:
+
+- Container `bangallabs-web` berstatus `Up`.
+- Loopback `127.0.0.1:3100` merespons `200`.
+- Caddy dapat mengakses `bangallabs-web:3000`.
+- Domain HTTPS merespons `200`.
+
+Periksa bahwa container lain tidak berubah:
 
 ```bash
-sudo mkdir -p /opt/website
-sudo chown -R <VPS_USER>:<VPS_USER> /opt/website
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 ```
 
-## 3. Copy project dari komputer lokal
+## 7. Update rutin berikutnya
 
-Jalankan perintah berikut di Terminal komputer lokal, bukan di dalam VPS:
+Setelah workflow Git aktif, deployment berikutnya cukup:
 
 ```bash
-cd /Users/newuser/ali/project/bangAllabs
+cd /opt/bangallabs-profile
 
-rsync -avz \
-  --exclude node_modules \
-  --exclude .next \
-  --exclude .env.local \
-  --exclude .env.production \
-  website/ <VPS_USER>@<VPS_IP>:/opt/website/
+git status --short
+git fetch --prune origin
+git pull --ff-only origin main
+
+docker compose -p website --env-file .env.production config -q
+docker compose -p website --env-file .env.production build web
+docker compose -p website --env-file .env.production up -d --no-deps --force-recreate web
+
+docker compose -p website --env-file .env.production ps
+curl --max-time 15 -I http://127.0.0.1:3100
+curl --max-time 20 -I https://bangallabs.web.id
 ```
 
-Perintah tersebut tidak menyalin dependency, hasil build lokal, atau secret environment.
+Jika `git status --short` tidak kosong, hentikan proses dan periksa perubahan server. Jangan memakai `git reset --hard` karena dapat menghapus perubahan atau konfigurasi yang belum disimpan.
 
-Periksa hasil copy:
+## 8. Rollback ke source lama
 
-```bash
-ssh <VPS_USER>@<VPS_IP>
-cd /opt/website
-ls -la
-```
-
-Pastikan minimal terdapat `Dockerfile`, `docker-compose.yml`, `package.json`, `app`, `components`, `lib`, dan `public`.
-
-## 4. Buat konfigurasi production
-
-Masih di VPS:
-
-```bash
-cd /opt/website
-cp .env.example .env.production
-nano .env.production
-```
-
-Isi dengan nilai sebenarnya:
-
-```dotenv
-NEXT_PUBLIC_SITE_URL=https://bangallabs.web.id
-CONTACT_EMAIL=hello@bangallabs.web.id
-WHATSAPP_NUMBER=628xxxxxxxxxx
-NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
-```
-
-Catatan:
-
-- Nomor WhatsApp menggunakan `62`, tanpa tanda `+`, spasi, atau angka awal `0`.
-- Kosongkan `NEXT_PUBLIC_GA_ID` jika GA4 belum dibuat.
-- Pastikan mailbox `CONTACT_EMAIL` benar-benar aktif.
-- Jangan mengirim atau menyimpan `.env.production` ke repository publik.
-
-Simpan Nano dengan `Ctrl+O`, Enter, lalu keluar menggunakan `Ctrl+X`.
-
-Batasi permission file environment:
-
-```bash
-chmod 600 /opt/website/.env.production
-```
-
-## 5. Build dan jalankan container
-
-Di VPS:
-
-```bash
-cd /opt/website
-docker compose --env-file .env.production config
-docker compose --env-file .env.production up -d --build
-```
-
-Konfigurasi menetapkan `HOSTNAME=0.0.0.0` agar Next.js menerima koneksi dari loopback host dan container lain pada `cv-abu-net`. Port `3000` di sini adalah port internal milik container BangAl Labs sehingga tidak bertabrakan dengan port internal container CV Abu.
-
-Periksa status dan log:
-
-```bash
-docker compose ps
-docker compose logs --tail=100 web
-```
-
-Status container seharusnya `Up`. Tes langsung dari VPS:
-
-```bash
-curl -I http://127.0.0.1:3100
-```
-
-Hasil yang diharapkan adalah `HTTP/1.1 200 OK` atau respons sukses `2xx/3xx`.
-
-## 6. Tambahkan BangAl Labs ke Caddy
-
-Jangan mengganti atau menghapus konfigurasi `cv-abu-app`. Buat backup Caddyfile terlebih dahulu:
-
-```bash
-sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.backup
-sudo nano /etc/caddy/Caddyfile
-```
-
-Tambahkan blok berikut di bagian paling bawah:
-
-```caddyfile
-bangallabs.web.id, www.bangallabs.web.id {
-    encode zstd gzip
-    reverse_proxy bangallabs-web:3000
-}
-```
-
-Jika DNS `www` belum dibuat, gunakan hanya domain utama:
-
-```caddyfile
-bangallabs.web.id {
-    encode zstd gzip
-    reverse_proxy bangallabs-web:3000
-}
-```
-
-Format, validasi, lalu reload. Jangan reload jika validasi gagal:
-
-```bash
-sudo caddy fmt --overwrite /etc/caddy/Caddyfile
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-sudo systemctl status caddy --no-pager
-```
-
-Tes HTTP dari komputer lokal:
-
-```bash
-curl -I http://bangallabs.web.id
-```
-
-## 7. Periksa HTTPS otomatis
-
-Caddy otomatis meminta dan memperbarui sertifikat HTTPS. Pantau log jika sertifikat masih diproses:
-
-```bash
-sudo journalctl -u caddy --no-pager -n 100
-```
-
-Periksa website:
-
-```bash
-curl -I https://bangallabs.web.id
-```
-
-Jika `bangallabs.my.id` juga dimiliki dan DNS-nya mengarah ke VPS, tambahkan redirect opsional ke Caddyfile:
-
-```caddyfile
-bangallabs.my.id, www.bangallabs.my.id {
-    redir https://bangallabs.web.id{uri} permanent
-}
-```
-
-Kemudian validasi dan reload kembali:
-
-```bash
-sudo caddy fmt --overwrite /etc/caddy/Caddyfile
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-```
-
-Kemudian buka `https://bangallabs.web.id` di browser.
-
-## 8. Firewall opsional
-
-Jalankan bagian ini hanya jika VPS menggunakan UFW. Izinkan SSH terlebih dahulu agar akses tidak terputus:
-
-```bash
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw status
-```
-
-Jika UFW belum aktif dan Anda memang ingin mengaktifkannya:
-
-```bash
-sudo ufw enable
-```
-
-Port `3100` tidak perlu dibuka karena Docker hanya mempublikasikannya ke `127.0.0.1` untuk Caddy.
-
-## 9. Checklist setelah deployment
-
-Periksa secara manual:
-
-1. Halaman terbuka melalui HTTPS tanpa peringatan sertifikat.
-2. `http://bangallabs.web.id` berpindah ke HTTPS.
-3. Logo dan gambar tampil.
-4. Menu navigasi berfungsi.
-5. Tombol WhatsApp membuka nomor yang benar.
-6. Form kontak membuka WhatsApp dengan isi form.
-7. Email dan LinkedIn mengarah ke akun yang benar.
-8. `https://bangallabs.web.id/robots.txt` dapat dibuka.
-9. `https://bangallabs.web.id/sitemap.xml` dapat dibuka.
-10. Event terlihat di GA4 Realtime jika Measurement ID sudah dipasang.
-
-## 10. Cara update website
-
-Sebelum update, buat backup source yang sedang aktif di VPS:
-
-```bash
-ssh <VPS_USER>@<VPS_IP>
-sudo tar -czf /opt/bangallabs-backup-$(date +%Y%m%d-%H%M).tar.gz -C /opt website
-exit
-```
-
-Copy versi terbaru dari komputer lokal:
-
-```bash
-cd /Users/newuser/ali/project/bangAllabs
-
-rsync -avz \
-  --exclude node_modules \
-  --exclude .next \
-  --exclude .env.local \
-  --exclude .env.production \
-  website/ <VPS_USER>@<VPS_IP>:/opt/website/
-```
-
-Rebuild di VPS:
-
-```bash
-ssh <VPS_USER>@<VPS_IP>
-cd /opt/website
-docker compose --env-file .env.production up -d --build
-docker compose ps
-docker compose logs --tail=100 web
-```
-
-Karena analytics dan metadata dimasukkan saat proses build, perubahan `NEXT_PUBLIC_GA_ID`, domain, email, atau WhatsApp juga memerlukan perintah rebuild di atas.
-
-## 11. Perintah operasional
-
-Melihat status:
+Jika deployment baru gagal tetapi folder lama masih tersedia:
 
 ```bash
 cd /opt/website
-docker compose ps
+
+docker compose \
+  -p website \
+  -f docker-compose.yml \
+  --env-file .env.production \
+  up -d --no-deps --force-recreate web
+
+curl --max-time 15 -I http://127.0.0.1:3100
+curl --max-time 20 -I https://bangallabs.web.id
 ```
 
-Melihat log berjalan:
+Jika image lama perlu dipulihkan, lihat tag backup:
 
 ```bash
-docker compose logs -f web
+docker image ls 'bangallabs-web:rollback-*'
 ```
 
-Restart aplikasi:
-
-```bash
-docker compose restart web
-```
-
-Menghentikan aplikasi:
-
-```bash
-docker compose down
-```
-
-Menjalankan kembali:
-
-```bash
-docker compose --env-file .env.production up -d
-```
-
-## 12. Troubleshooting
-
-### Website menampilkan 502 Bad Gateway
-
-```bash
-cd /opt/website
-docker compose ps
-docker compose logs --tail=200 web
-curl -I http://127.0.0.1:3100
-```
-
-Jika container berhenti, rebuild:
-
-```bash
-docker compose --env-file .env.production up -d --build
-```
-
-### Caddy gagal reload
-
-```bash
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo journalctl -u caddy --no-pager -n 100
-```
-
-Jangan reload sampai `caddy validate` menyatakan konfigurasi valid. Untuk mengembalikan backup:
-
-```bash
-sudo cp /etc/caddy/Caddyfile.backup /etc/caddy/Caddyfile
-sudo caddy validate --config /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-```
-
-### Caddy gagal menerbitkan HTTPS
-
-Pastikan DNS sudah benar:
-
-```bash
-dig +short bangallabs.web.id
-dig +short www.bangallabs.web.id
-```
-
-Pastikan port 80/443 dapat diakses dan Caddy berjalan:
-
-```bash
-sudo systemctl status caddy
-sudo ss -lntp | grep -E ':80|:443'
-```
-
-### Analytics tidak muncul
-
-Periksa Measurement ID:
-
-```bash
-cd /opt/website
-grep NEXT_PUBLIC_GA_ID .env.production
-```
-
-Setelah memperbaiki nilainya, selalu rebuild:
-
-```bash
-docker compose --env-file .env.production up -d --build
-```
-
-Kemudian periksa GA4 Realtime sambil membuka website dari browser yang tidak memblokir analytics.
+Tag rollback jangan dihapus sampai versi Git baru stabil dan sudah diverifikasi.
